@@ -55,7 +55,7 @@ func (u *App) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			if err := u.update(); err != nil {
-				log.Printf("[ERR] %s", err)
+				log.Printf(`[ERR] msg="%s"`, err)
 			}
 
 		case <-ctx.Done():

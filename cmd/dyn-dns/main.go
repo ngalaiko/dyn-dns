@@ -4,11 +4,10 @@ import (
 	"context"
 	"flag"
 	"log"
-	"net"
 	"time"
 
 	updater "github.com/ngalayko/dyn-dns/app"
-	fetcher "github.com/ngalayko/dyn-dns/app/fetcher/mock"
+	"github.com/ngalayko/dyn-dns/app/fetcher/ipify"
 	provider "github.com/ngalayko/dyn-dns/app/provider/mock"
 )
 
@@ -24,10 +23,10 @@ func main() {
 
 	if err := updater.New(
 		provider.New(),
-		&fetcher.Mock{IP: net.IPv4(127, 0, 0, 1)},
+		ipify.New(),
 		*domain,
 		*interval,
 	).Run(ctx); err != nil {
-		log.Panic(err)
+		log.Panicf(`[PANIC] msg="%s"`, err)
 	}
 }
