@@ -6,6 +6,6 @@ type Provider interface {
 	Create(*Record) error
 	// Updates existing record.
 	Update(*Record) error
-	// Returns list of existing records.
-	Get() ([]*Record, error)
+	// Returns list of existing records for a given domain.
+	Get(string) ([]*Record, error)
 }

@@ -17,4 +17,4 @@ go install github.com/ngalayko/dyn-dns/cmd/dyn-dns
 1. Fetchers:
     * [ipify](https://www.ipify.org/)
 1. DNS providers:
-    * [digitalocean](https://www.digitalocean.com/) [TODO]
+    * [DigitalOcean](https://www.digitalocean.com/)

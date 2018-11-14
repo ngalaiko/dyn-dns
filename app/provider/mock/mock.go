@@ -42,6 +42,6 @@ func (m *Mock) Update(r *provider.Record) error {
 }
 
 // Get implements Provider interface.
-func (m *Mock) Get() ([]*provider.Record, error) {
+func (m *Mock) Get(domain string) ([]*provider.Record, error) {
 	return m.recordsList, nil
 }

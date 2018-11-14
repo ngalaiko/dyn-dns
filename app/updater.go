@@ -18,7 +18,11 @@ type App struct {
 	// dns provider api
 	dnsProvider provider.Provider
 	// record name to change
-	recordName string
+	record string
+	// domain name to change
+	domain string
+	// typ is a record type
+	typ provider.RecordType
 	// interval between checks
 	interval time.Duration
 }
@@ -27,24 +31,36 @@ type App struct {
 func New(
 	p provider.Provider,
 	f fetcher.Fetcher,
-	recordName string,
+	domain string,
+	record string,
+	typ provider.RecordType,
 	interval time.Duration,
 ) *App {
 	return &App{
 		dnsProvider: p,
 		ipFetcher:   f,
-		recordName:  recordName,
+		record:      record,
+		domain:      domain,
+		typ:         typ,
 		interval:    interval,
 	}
 }
 
-// Run starts updater.
-func (u *App) Run(ctx context.Context) error {
+func (u *App) log(level, msg string) {
 	log.Printf(
-		`[INFO] msg="application started" host="%s" interval="%s"`,
-		u.recordName,
+		`[%s] msg="%s" host="%s" record="%s" type="%s" interval="%s"`,
+		level,
+		msg,
+		u.domain,
+		u.record,
+		u.typ,
 		u.interval,
 	)
+}
+
+// Run starts updater.
+func (u *App) Run(ctx context.Context) error {
+	u.log("INFO", "application started")
 
 	if err := u.update(); err != nil {
 		return fmt.Errorf("initial run failed: %s", err)
@@ -55,7 +71,7 @@ func (u *App) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			if err := u.update(); err != nil {
-				log.Printf(`[ERR] msg="%s"`, err)
+				u.log("ERR", err.Error())
 			}
 
 		case <-ctx.Done():
@@ -65,7 +81,7 @@ func (u *App) Run(ctx context.Context) error {
 }
 
 func (u *App) update() error {
-	records, err := u.dnsProvider.Get()
+	records, err := u.dnsProvider.Get(u.domain)
 	if err != nil {
 		return err
 	}
@@ -76,14 +92,21 @@ func (u *App) update() error {
 	}
 
 	for _, r := range records {
-		if r.Name != u.recordName {
+		if r.Name != u.record {
 			continue
 		}
+
+		if r.Type != u.typ {
+			continue
+		}
+
 		if r.Value == currentIP.String() {
+			u.log("INFO", "ip is up to date")
 			return nil
 		}
 
 		r.Value = currentIP.String()
+
 		if err := u.dnsProvider.Update(r); err != nil {
 			return fmt.Errorf(
 				"can't update a record value to %s: %s",
@@ -91,17 +114,14 @@ func (u *App) update() error {
 				err,
 			)
 		}
-		log.Printf(
-			`[INFO] msg="record updated" host="%s" ip="%s"`,
-			u.recordName,
-			currentIP.String(),
-		)
+
+		u.log("INFO", "record updated")
 		return nil
 	}
 
 	r := &provider.Record{
 		Type:  provider.RecordTypeA,
-		Name:  u.recordName,
+		Name:  u.record,
 		Value: currentIP.String(),
 	}
 
@@ -112,11 +132,7 @@ func (u *App) update() error {
 			err,
 		)
 	}
-	log.Printf(
-		`[INFO] msg="record created" host="%s" ip="%s"`,
-		u.recordName,
-		currentIP.String(),
-	)
 
+	u.log("INFO", "record created")
 	return nil
 }
