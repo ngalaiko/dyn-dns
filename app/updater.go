@@ -92,7 +92,8 @@ func (u *App) update() error {
 	}
 
 	for _, r := range records {
-		if r.Name != u.record {
+		fullName := fmt.Sprintf("%s.%s", u.record, u.domain)
+		if r.Name != u.record && r.Name != fullName {
 			continue
 		}
 
